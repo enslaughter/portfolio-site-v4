@@ -4,9 +4,6 @@ jobs:
   build_and_deploy_staging:
     machine:
       image: ubuntu-2204:current
-    environment:
-      VERCEL_ORG_ID: $VERCEL_ORG_ID
-      VERCEL_PROJECT_ID: $VERCEL_PROJECT_ID
     steps:
       - checkout
       - run:
@@ -37,9 +34,6 @@ jobs:
   build_and_deploy_production:
     machine:
       image: ubuntu-2204:current
-    environment:
-      VERCEL_ORG_ID: $VERCEL_ORG_ID
-      VERCEL_PROJECT_ID: $VERCEL_PROJECT_ID
     steps:
       - checkout
       - run:
