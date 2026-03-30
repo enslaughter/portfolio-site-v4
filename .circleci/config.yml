@@ -8,7 +8,6 @@ jobs:
       - checkout
       - run:
           name: Build with Docker
-          # Builds only up to the 'build' stage — runs npm run build inside the container
           command: docker build --target build -t portfolio-build .
       - run:
           name: Extract .next artifacts from container
@@ -24,8 +23,6 @@ jobs:
           command: vercel pull --yes --environment=preview --token=$VERCEL_TOKEN
       - run:
           name: Package artifacts for Vercel deployment
-          # vercel build must run to produce .vercel/output — next build re-runs here.
-          # To skip the double build, remove the Docker steps above and just use this.
           command: vercel build --token=$VERCEL_TOKEN
       - run:
           name: Deploy to Vercel (preview)
