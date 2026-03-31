@@ -1,9 +1,10 @@
 import { cookies } from "next/headers";
+import { verifyToken } from "@/lib/jwt";
 
 export default async function Home() {
   const cookieStore = await cookies();
-  const rawCookie = cookieStore.get("github_user");
-  const user = rawCookie ? JSON.parse(rawCookie.value) : null;
+  const tokenCookie = cookieStore.get("token");
+  const user = tokenCookie ? await verifyToken(tokenCookie.value) : null;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100vh" }}>
@@ -15,7 +16,7 @@ export default async function Home() {
         <>
           <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginTop: "1.5rem" }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={user.avatar_url} alt={user.name} width={64} height={64} style={{ borderRadius: "50%" }} />
+            <img src={user.avatar_url} alt={user.name ?? undefined} width={64} height={64} style={{ borderRadius: "50%" }} />
             <span>{user.name}</span>
           </div>
           <pre style={{ marginTop: "2rem", textAlign: "left" }}>

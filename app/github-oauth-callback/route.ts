@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { NextRequest } from "next/server";
+import { signToken } from "@/lib/jwt";
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
@@ -41,11 +42,20 @@ export async function GET(request: NextRequest) {
 
   const user = await userResponse.json();
 
+  const jwt = await signToken({
+    id: user.id,
+    login: user.login,
+    name: user.name ?? null,
+    avatar_url: user.avatar_url,
+  });
+
   const cookieStore = await cookies();
-  cookieStore.set("github_user", JSON.stringify(user), {
+  cookieStore.set("token", jwt, {
     httpOnly: true,
     path: "/",
     maxAge: 60 * 60 * 24,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
   });
 
   return Response.redirect(new URL("/", request.url));
