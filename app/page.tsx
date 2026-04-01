@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { verifyToken } from "@/lib/jwt";
+import Button from "@/components/Button";
 
 export default async function Home() {
   const cookieStore = await cookies();
@@ -8,9 +9,9 @@ export default async function Home() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100vh" }}>
-      <h1>Github OAuth sign in</h1>
+      <h1>Sign in with GitHub</h1>
       <a href="/api/auth/login">
-        <button>Sign In</button>
+        <Button>Sign In</Button>
       </a>
       {user && (
         <>
