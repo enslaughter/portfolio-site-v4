@@ -25,10 +25,10 @@ const StyledTextarea = styled.textarea`
   }
 `
 
-export default function CenteredTextarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
+export default function CenteredTextarea({ ref, ...props }: React.ComponentPropsWithRef<'textarea'>) {
   return (
     <Wrapper>
-      <StyledTextarea {...props} />
+      <StyledTextarea ref={ref} {...props} />
     </Wrapper>
   )
 }

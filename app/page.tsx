@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { verifyToken } from "@/lib/jwt";
 import Button from "@/components/Button";
-import CenteredTextarea from "@/components/CenteredTextarea";
+import CollaborativeTextarea from "@/components/CollaborativeTextarea";
 
 export default async function Home() {
   const cookieStore = await cookies();
@@ -24,7 +24,7 @@ export default async function Home() {
           <pre style={{ marginTop: "2rem", textAlign: "left" }}>
             {JSON.stringify(user, null, 2)}
           </pre>
-          <CenteredTextarea placeholder="Write something..." />
+          <CollaborativeTextarea />
         </>
       )}
     </div>
