@@ -24,9 +24,9 @@ export default async function Home() {
           <pre style={{ marginTop: "2rem", textAlign: "left" }}>
             {JSON.stringify(user, null, 2)}
           </pre>
-          <CollaborativeTextarea />
         </>
       )}
+      <CollaborativeTextarea />
     </div>
   );
 }
