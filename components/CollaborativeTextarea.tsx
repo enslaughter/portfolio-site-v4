@@ -31,6 +31,7 @@ export default function CollaborativeTextarea() {
 
       const doc = new Y.Doc()
       const wsUrl = process.env.NEXT_PUBLIC_WS_URL ?? 'ws://localhost:8080'
+      console.log(`Fetching WS URL: ${wsUrl}`)
       const provider = new WebsocketProvider(wsUrl, 'ens-portfolio-textarea', doc, {
         params: wsToken ? { token: wsToken } : {},
       })
