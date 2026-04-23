@@ -8,7 +8,7 @@ jobs:
       - checkout
       - run:
           name: Build with Docker
-          command: docker build --target build -t portfolio-build .
+          command: docker build --target build --build-arg NEXT_PUBLIC_WS_URL=$NEXT_PUBLIC_WS_URL -t portfolio-build .
       - run:
           name: Extract .next artifacts from container
           command: |
@@ -35,7 +35,7 @@ jobs:
       - checkout
       - run:
           name: Build with Docker
-          command: docker build --target build -t portfolio-build .
+          command: docker build --target build --build-arg NEXT_PUBLIC_WS_URL=$NEXT_PUBLIC_WS_URL -t portfolio-build .
       - run:
           name: Extract .next artifacts from container
           command: |

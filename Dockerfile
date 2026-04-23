@@ -40,6 +40,10 @@ RUN --mount=type=bind,source=package.json,target=package.json \
     --mount=type=cache,target=/root/.npm \
     npm ci
 
+# Build-time env vars for NEXT_PUBLIC_ inlining
+ARG NEXT_PUBLIC_WS_URL
+ENV NEXT_PUBLIC_WS_URL=$NEXT_PUBLIC_WS_URL
+
 # Copy the rest of the source files into the image.
 COPY . .
 # Run the build script.
