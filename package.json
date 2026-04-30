@@ -9,12 +9,14 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@reduxjs/toolkit": "^2.11.2",
     "@vercel/oidc": "^3.2.0",
     "google-auth-library": "^10.6.2",
     "jose": "^6.2.2",
     "next": "16.2.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "react-redux": "^9.2.0",
     "styled-components": "^6.3.12",
     "y-websocket": "^3.0.0",
     "yjs": "^13.6.30"

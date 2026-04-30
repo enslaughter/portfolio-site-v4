@@ -5,22 +5,7 @@ import * as Y from 'yjs'
 import { WebsocketProvider } from 'y-websocket'
 import styled from 'styled-components'
 import CenteredTextarea from './CenteredTextarea'
-import { useUser } from '@/lib/UserContext'
-
-const COLORS = [
-  '#e57373', '#f06292', '#ba68c8', '#7986cb',
-  '#4dd0e1', '#4db6ac', '#81c784', '#ffb74d',
-]
-
-function colorForClient(clientId: number): string {
-  return COLORS[clientId % COLORS.length]
-}
-
-function guestName(clientId: number): string {
-  const adjectives = ['Quiet', 'Bright', 'Swift', 'Calm', 'Bold', 'Keen', 'Sage', 'Warm']
-  const nouns = ['Panda', 'Finch', 'Otter', 'Crane', 'Fox', 'Lynx', 'Ibis', 'Wren']
-  return `${adjectives[clientId % adjectives.length]} ${nouns[Math.floor(clientId / adjectives.length) % nouns.length]}`
-}
+import { useAppSelector } from '@/lib/store/hooks'
 
 async function fetchWsToken(): Promise<string | null> {
   try {
@@ -91,9 +76,15 @@ const Tooltip = styled.span`
 
 export default function CollaborativeTextarea() {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const user = useUser()
+  const providerRef = useRef<WebsocketProvider | null>(null)
   const [peers, setPeers] = useState<Map<number, AwarenessState>>(new Map())
 
+  const reduxUser = useAppSelector(state => state.user)
+  // Keep a ref so the async Yjs setup always reads the latest user state
+  const reduxUserRef = useRef(reduxUser)
+  reduxUserRef.current = reduxUser
+
+  // One-time Yjs connection setup
   useEffect(() => {
     const textarea = textareaRef.current
     if (!textarea) return
@@ -112,12 +103,13 @@ export default function CollaborativeTextarea() {
       })
       const yText = doc.getText('content')
 
-      // Set local awareness state
-      const localUser: AwarenessUser = user
-        ? { name: user.name ?? 'Anonymous', avatarUrl: user.avatar_url, color: colorForClient(doc.clientID) }
-        : { name: guestName(doc.clientID), avatarUrl: null, color: colorForClient(doc.clientID) }
+      // Set initial awareness from whatever user state is current at connect time
+      const { name, avatarUrl, color } = reduxUserRef.current
+      if (name) {
+        provider.awareness.setLocalState({ user: { name, avatarUrl, color }, cursor: null } satisfies AwarenessState)
+      }
 
-      provider.awareness.setLocalState({ user: localUser, cursor: null } satisfies AwarenessState)
+      providerRef.current = provider
 
       const syncPeers = () => {
         const next = new Map<number, AwarenessState>()
@@ -158,6 +150,7 @@ export default function CollaborativeTextarea() {
       textarea.addEventListener('click', handleSelectionChange)
 
       cleanupFn = () => {
+        providerRef.current = null
         yText.unobserve(observer)
         textarea.removeEventListener('input', handleInput)
         textarea.removeEventListener('keyup', handleSelectionChange)
@@ -173,7 +166,18 @@ export default function CollaborativeTextarea() {
       torn = true
       cleanupFn?.()
     }
-  }, [user])
+  }, [])
+
+  // Keep awareness in sync whenever Redux user state changes
+  useEffect(() => {
+    const provider = providerRef.current
+    if (!provider || !reduxUser.name) return
+    provider.awareness.setLocalStateField('user', {
+      name: reduxUser.name,
+      avatarUrl: reduxUser.avatarUrl,
+      color: reduxUser.color,
+    })
+  }, [reduxUser])
 
   const peerList = Array.from(peers.values())
 

@@ -3,6 +3,8 @@ import { Montserrat } from 'next/font/google'
 import StyledComponentsRegistry from "../lib/registry";
 import GlobalStyles from "../lib/GlobalStyles";
 import { UserProvider } from "../lib/UserContext";
+import { StoreProvider } from "../lib/store/StoreProvider";
+import { UserSyncer } from "../lib/UserSyncer";
 import { getUser } from "../lib/getUser";
 
 export const metadata: Metadata = {
@@ -26,12 +28,15 @@ export default async function RootLayout({
   return (
     <html lang="en" className={montserrat.variable}>
       <body>
-        <StyledComponentsRegistry>
-          <GlobalStyles />
-          <UserProvider user={user}>
-            {children}
-          </UserProvider>
-        </StyledComponentsRegistry>
+        <StoreProvider>
+          <StyledComponentsRegistry>
+            <GlobalStyles />
+            <UserProvider user={user}>
+              <UserSyncer />
+              {children}
+            </UserProvider>
+          </StyledComponentsRegistry>
+        </StoreProvider>
       </body>
     </html>
   );
