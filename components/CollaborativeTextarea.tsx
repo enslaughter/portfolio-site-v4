@@ -39,6 +39,13 @@ const PresenceBar = styled.div`
   padding: 0 4px 4px;
 `
 
+const PresenceLabel = styled.span`
+  font-size: 12px;
+  opacity: 0.6;
+  white-space: nowrap;
+  margin-right: 2px;
+`
+
 const Avatar = styled.div<{ $color: string }>`
   position: relative;
   width: 28px;
@@ -179,36 +186,34 @@ export default function CollaborativeTextarea() {
     })
   }, [reduxUser])
 
-  const peerList = Array.from(peers.values())
+  function renderAvatar(name: string, avatarUrl: string | null, color: string, tooltip: string, key: string | number) {
+    const initials = name
+      .split(' ')
+      .map(w => w[0])
+      .join('')
+      .slice(0, 2)
+      .toUpperCase()
+    return (
+      <Avatar key={key} $color={color}>
+        {avatarUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={avatarUrl} alt={name} width={28} height={28} style={{ borderRadius: '50%', display: 'block' }} />
+        ) : (
+          initials
+        )}
+        <Tooltip>{tooltip}</Tooltip>
+      </Avatar>
+    )
+  }
 
   return (
     <div>
       <PresenceBar>
-        {peerList.map((state, i) => {
-          const initials = state.user.name
-            .split(' ')
-            .map(w => w[0])
-            .join('')
-            .slice(0, 2)
-            .toUpperCase()
-          return (
-            <Avatar key={i} $color={state.user.color} title={state.user.name}>
-              {state.user.avatarUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={state.user.avatarUrl}
-                  alt={state.user.name}
-                  width={28}
-                  height={28}
-                  style={{ borderRadius: '50%', display: 'block' }}
-                />
-              ) : (
-                initials
-              )}
-              <Tooltip>{state.user.name}</Tooltip>
-            </Avatar>
-          )
-        })}
+        <PresenceLabel>Current Editors:</PresenceLabel>
+        {reduxUser.name && renderAvatar(reduxUser.name, reduxUser.avatarUrl, reduxUser.color, `${reduxUser.name} (you)`, 'local')}
+        {Array.from(peers.entries()).map(([clientId, state]) =>
+          renderAvatar(state.user.name, state.user.avatarUrl, state.user.color, state.user.name, clientId)
+        )}
       </PresenceBar>
       <CenteredTextarea ref={textareaRef} placeholder="Write something..." />
     </div>
