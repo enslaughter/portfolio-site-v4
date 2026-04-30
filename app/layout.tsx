@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Montserrat } from 'next/font/google'
 import StyledComponentsRegistry from "../lib/registry";
 import GlobalStyles from "../lib/GlobalStyles";
+import { UserProvider } from "../lib/UserContext";
+import { getUser } from "../lib/getUser";
 
 export const metadata: Metadata = {
   title: "Elijah Slaughter - Software Engineer",
@@ -10,23 +12,27 @@ export const metadata: Metadata = {
 
 const montserrat = Montserrat({
   subsets: ['latin'],
-  weight: ['400', '700'],   // Montserrat isn't a variable font, so list the weights you need
+  weight: ['400', '700'],
   variable: '--font-montserrat',
 })
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const user = await getUser();
+
   return (
     <html lang="en" className={montserrat.variable}>
       <body>
-          <StyledComponentsRegistry>
-            <GlobalStyles />
+        <StyledComponentsRegistry>
+          <GlobalStyles />
+          <UserProvider user={user}>
             {children}
-          </StyledComponentsRegistry>
-        </body>
+          </UserProvider>
+        </StyledComponentsRegistry>
+      </body>
     </html>
   );
 }

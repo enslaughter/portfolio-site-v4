@@ -40,13 +40,13 @@ export async function GET(request: NextRequest) {
     },
   });
 
-  const user = await userResponse.json();
+  const githubUser = await userResponse.json();
 
   const jwt = await signToken({
-    id: user.id,
-    login: user.login,
-    name: user.name ?? null,
-    avatar_url: user.avatar_url,
+    id: String(githubUser.id),
+    provider: "github",
+    name: githubUser.name ?? null,
+    avatar_url: githubUser.avatar_url,
   });
 
   const cookieStore = await cookies();

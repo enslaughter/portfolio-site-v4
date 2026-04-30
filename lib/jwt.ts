@@ -1,8 +1,8 @@
 import { SignJWT, jwtVerify } from "jose";
 
 export interface JWTPayload {
-  id: number;
-  login: string;
+  id: string;
+  provider: "github" | "google";
   name: string | null;
   avatar_url: string;
 }
