@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 
-const COLORS = [
+export const COLORS = [
   '#e57373', '#f06292', '#ba68c8', '#7986cb',
   '#4dd0e1', '#4db6ac', '#81c784', '#ffb74d',
 ]
@@ -38,8 +38,11 @@ export const userSlice = createSlice({
       state.isGuest = false
       // color is kept from initialization
     },
+    setColor: (state, action: PayloadAction<string>) => {
+      state.color = action.payload
+    },
   },
 })
 
-export const { initGuestUser, setAuthUser } = userSlice.actions
+export const { initGuestUser, setAuthUser, setColor } = userSlice.actions
 export default userSlice.reducer

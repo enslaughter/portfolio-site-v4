@@ -5,7 +5,8 @@ import * as Y from 'yjs'
 import { WebsocketProvider } from 'y-websocket'
 import styled from 'styled-components'
 import CenteredTextarea from './CenteredTextarea'
-import { useAppSelector } from '@/lib/store/hooks'
+import { useAppSelector, useAppDispatch } from '@/lib/store/hooks'
+import { setColor, COLORS } from '@/lib/store/userSlice'
 
 async function fetchWsToken(): Promise<string | null> {
   try {
@@ -147,6 +148,7 @@ export default function CollaborativeTextarea() {
   const [peers, setPeers] = useState<Map<number, AwarenessState>>(new Map())
   const [cursorPositions, setCursorPositions] = useState<Map<number, CaretCoords>>(new Map())
 
+  const dispatch = useAppDispatch()
   const reduxUser = useAppSelector(state => state.user)
   // Keep a ref so the async Yjs setup always reads the latest user state
   const reduxUserRef = useRef(reduxUser)
@@ -171,10 +173,18 @@ export default function CollaborativeTextarea() {
       })
       const yText = doc.getText('content')
 
+      // Pick a color not already in use by connected peers
+      const usedColors = new Set<string>()
+      provider.awareness.getStates().forEach((state) => {
+        if (state?.user?.color) usedColors.add(state.user.color)
+      })
+      const uniqueColor = COLORS.find(c => !usedColors.has(c)) ?? COLORS[Math.floor(Math.random() * COLORS.length)]
+      dispatch(setColor(uniqueColor))
+
       // Set initial awareness from whatever user state is current at connect time
-      const { name, avatarUrl, color } = reduxUserRef.current
+      const { name, avatarUrl } = reduxUserRef.current
       if (name) {
-        provider.awareness.setLocalState({ user: { name, avatarUrl, color }, cursor: null, focused: false } satisfies AwarenessState)
+        provider.awareness.setLocalState({ user: { name, avatarUrl, color: uniqueColor }, cursor: null, focused: false } satisfies AwarenessState)
       }
 
       providerRef.current = provider
