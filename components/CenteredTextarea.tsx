@@ -8,6 +8,11 @@ const Wrapper = styled.div`
   margin-top: 16px;
 `
 
+const InnerWrapper = styled.div`
+  position: relative;
+  display: inline-block;
+`
+
 const StyledTextarea = styled.textarea`
   font-family: inherit;
   font-size: 16px;
@@ -25,10 +30,15 @@ const StyledTextarea = styled.textarea`
   }
 `
 
-export default function CenteredTextarea({ ref, ...props }: React.ComponentPropsWithRef<'textarea'>) {
+type Props = React.ComponentPropsWithRef<'textarea'> & { children?: React.ReactNode }
+
+export default function CenteredTextarea({ ref, children, ...props }: Props) {
   return (
     <Wrapper>
-      <StyledTextarea ref={ref} {...props} />
+      <InnerWrapper>
+        <StyledTextarea ref={ref} {...props} />
+        {children}
+      </InnerWrapper>
     </Wrapper>
   )
 }

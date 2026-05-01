@@ -27,6 +27,54 @@ type AwarenessUser = {
 type AwarenessState = {
   user: AwarenessUser
   cursor: number | null
+  focused: boolean
+}
+
+type CaretCoords = { top: number; left: number; height: number }
+
+function getCaretCoordinates(textarea: HTMLTextAreaElement, position: number): CaretCoords {
+  const safePos = Math.min(position, textarea.value.length)
+  const computed = window.getComputedStyle(textarea)
+  const mirror = document.createElement('div')
+  document.body.appendChild(mirror)
+  Object.assign(mirror.style, {
+    position: 'absolute',
+    top: '-9999px',
+    left: '-9999px',
+    visibility: 'hidden',
+    whiteSpace: 'pre-wrap',
+    wordBreak: 'break-word',
+    boxSizing: computed.boxSizing,
+    width: computed.width,
+    paddingTop: computed.paddingTop,
+    paddingRight: computed.paddingRight,
+    paddingBottom: computed.paddingBottom,
+    paddingLeft: computed.paddingLeft,
+    borderTopWidth: computed.borderTopWidth,
+    borderRightWidth: computed.borderRightWidth,
+    borderBottomWidth: computed.borderBottomWidth,
+    borderLeftWidth: computed.borderLeftWidth,
+    fontFamily: computed.fontFamily,
+    fontStyle: computed.fontStyle,
+    fontVariant: computed.fontVariant,
+    fontWeight: computed.fontWeight,
+    fontSize: computed.fontSize,
+    lineHeight: computed.lineHeight,
+    letterSpacing: computed.letterSpacing,
+    wordSpacing: computed.wordSpacing,
+  })
+  mirror.textContent = textarea.value.substring(0, safePos)
+  const caret = document.createElement('span')
+  caret.textContent = '​'
+  mirror.appendChild(caret)
+  const lhRaw = computed.lineHeight
+  const height = lhRaw === 'normal'
+    ? parseFloat(computed.fontSize) * 1.2
+    : parseFloat(lhRaw)
+  const top = caret.offsetTop + parseFloat(computed.borderTopWidth) - textarea.scrollTop
+  const left = caret.offsetLeft + parseFloat(computed.borderLeftWidth) - textarea.scrollLeft
+  document.body.removeChild(mirror)
+  return { top, left, height }
 }
 
 const PresenceBar = styled.div`
@@ -81,10 +129,23 @@ const Tooltip = styled.span`
   pointer-events: none;
 `
 
+const CursorBar = styled.div<{ $color: string }>`
+  position: absolute;
+  width: 2px;
+  background: ${({ $color }) => $color};
+  pointer-events: auto;
+  cursor: default;
+
+  &:hover > span {
+    display: block;
+  }
+`
+
 export default function CollaborativeTextarea() {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const providerRef = useRef<WebsocketProvider | null>(null)
   const [peers, setPeers] = useState<Map<number, AwarenessState>>(new Map())
+  const [cursorPositions, setCursorPositions] = useState<Map<number, CaretCoords>>(new Map())
 
   const reduxUser = useAppSelector(state => state.user)
   // Keep a ref so the async Yjs setup always reads the latest user state
@@ -113,7 +174,7 @@ export default function CollaborativeTextarea() {
       // Set initial awareness from whatever user state is current at connect time
       const { name, avatarUrl, color } = reduxUserRef.current
       if (name) {
-        provider.awareness.setLocalState({ user: { name, avatarUrl, color }, cursor: null } satisfies AwarenessState)
+        provider.awareness.setLocalState({ user: { name, avatarUrl, color }, cursor: null, focused: false } satisfies AwarenessState)
       }
 
       providerRef.current = provider
@@ -151,10 +212,20 @@ export default function CollaborativeTextarea() {
         provider.awareness.setLocalStateField('cursor', textarea.selectionStart)
       }
 
+      const handleFocus = () => {
+        provider.awareness.setLocalStateField('focused', true)
+      }
+
+      const handleBlur = () => {
+        provider.awareness.setLocalStateField('focused', false)
+      }
+
       textarea.addEventListener('input', handleInput)
       textarea.addEventListener('keyup', handleSelectionChange)
       textarea.addEventListener('mouseup', handleSelectionChange)
       textarea.addEventListener('click', handleSelectionChange)
+      textarea.addEventListener('focus', handleFocus)
+      textarea.addEventListener('blur', handleBlur)
 
       cleanupFn = () => {
         providerRef.current = null
@@ -163,6 +234,8 @@ export default function CollaborativeTextarea() {
         textarea.removeEventListener('keyup', handleSelectionChange)
         textarea.removeEventListener('mouseup', handleSelectionChange)
         textarea.removeEventListener('click', handleSelectionChange)
+        textarea.removeEventListener('focus', handleFocus)
+        textarea.removeEventListener('blur', handleBlur)
         provider.awareness.off('change', syncPeers)
         provider.destroy()
         doc.destroy()
@@ -185,6 +258,26 @@ export default function CollaborativeTextarea() {
       color: reduxUser.color,
     })
   }, [reduxUser])
+
+  // Recalculate peer cursor pixel positions when peers change, and on textarea scroll
+  useEffect(() => {
+    const textarea = textareaRef.current
+    if (!textarea) return
+
+    const calculate = () => {
+      const next = new Map<number, CaretCoords>()
+      peers.forEach((state, clientId) => {
+        if (state.focused && state.cursor !== null) {
+          next.set(clientId, getCaretCoordinates(textarea, state.cursor))
+        }
+      })
+      setCursorPositions(new Map(next))
+    }
+
+    calculate()
+    textarea.addEventListener('scroll', calculate)
+    return () => textarea.removeEventListener('scroll', calculate)
+  }, [peers])
 
   function renderAvatar(name: string, avatarUrl: string | null, color: string, tooltip: string, key: string | number) {
     const initials = name
@@ -215,7 +308,21 @@ export default function CollaborativeTextarea() {
           renderAvatar(state.user.name, state.user.avatarUrl, state.user.color, state.user.name, clientId)
         )}
       </PresenceBar>
-      <CenteredTextarea ref={textareaRef} placeholder="Write something..." />
+      <CenteredTextarea ref={textareaRef} placeholder="Write something...">
+        {Array.from(peers.entries()).map(([clientId, state]) => {
+          const pos = cursorPositions.get(clientId)
+          if (!pos) return null
+          return (
+            <CursorBar
+              key={clientId}
+              $color={state.user.color}
+              style={{ top: pos.top, left: pos.left, height: pos.height }}
+            >
+              <Tooltip>{state.user.name}</Tooltip>
+            </CursorBar>
+          )
+        })}
+      </CenteredTextarea>
     </div>
   )
 }
